@@ -140,8 +140,6 @@ Here's an example to illustrate some of these concepts:
 >
 -}
 
-{-# LANGUAGE BangPatterns #-}
-
 module System.Log.Logger(
                                -- * Basic Types
                                Logger,
@@ -251,7 +249,7 @@ Example return value:
 
 -}
 componentsOfName :: String -> [String]
-componentsOfName !name =
+componentsOfName name =
     let joinComp [] _ = []
         joinComp (x:xs) [] = x : joinComp xs x
         joinComp (x:xs) accum =
@@ -271,7 +269,7 @@ logM :: String                           -- ^ Name of the logger to use
      -> String                           -- ^ The log text itself
      -> IO ()
 
-logM !logname !pri !msg = do
+logM logname pri msg = do
                        l <- getLogger logname
                        logL l pri msg
 
@@ -283,49 +281,49 @@ logM !logname !pri !msg = do
 debugM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-debugM !s = logM s DEBUG
+debugM s = logM s DEBUG
 
 {- | Log a message at 'INFO' priority -}
 infoM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-infoM !s = logM s INFO
+infoM s = logM s INFO
 
 {- | Log a message at 'NOTICE' priority -}
 noticeM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-noticeM !s = logM s NOTICE
+noticeM s = logM s NOTICE
 
 {- | Log a message at 'WARNING' priority -}
 warningM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-warningM !s = logM s WARNING
+warningM s = logM s WARNING
 
 {- | Log a message at 'ERROR' priority -}
 errorM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-errorM !s = logM s ERROR
+errorM s = logM s ERROR
 
 {- | Log a message at 'CRITICAL' priority -}
 criticalM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-criticalM !s = logM s CRITICAL
+criticalM s = logM s CRITICAL
 
 {- | Log a message at 'ALERT' priority -}
 alertM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-alertM !s = logM s ALERT
+alertM s = logM s ALERT
 
 {- | Log a message at 'EMERGENCY' priority -}
 emergencyM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-emergencyM !s = logM s EMERGENCY
+emergencyM s = logM s EMERGENCY
 
 ---------------------------------------------------------------------------
 -- Public Logger Interaction Support
@@ -360,11 +358,11 @@ getRootLogger = getLogger rootLoggerName
 
 -- | Log a message, assuming the current logger's level permits it.
 logL :: Logger -> Priority -> String -> IO ()
-logL !l !pri !msg = handle l (pri, msg)
+logL l pri msg = handle l (pri, msg)
 
 -- | Handle a log request.
 handle :: Logger -> LogRecord -> IO ()
-handle !l (!pri, !msg) =
+handle l (pri, msg) =
     let parentLoggers :: String -> IO [Logger]
         parentLoggers [] = return []
         parentLoggers name =

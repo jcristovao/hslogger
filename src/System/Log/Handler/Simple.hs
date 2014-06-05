@@ -3,7 +3,7 @@
    Copyright  : Copyright (C) 2004-2011 John Goerzen
    License    : BSD3
 
-   Maintainer : John Goerzen <jgoerzen@complete.org> 
+   Maintainer : John Goerzen <jgoerzen@complete.org>
    Stability  : provisional
    Portability: portable
 
@@ -11,6 +11,7 @@ Simple log handlers
 
 Written by John Goerzen, jgoerzen\@complete.org
 -}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module System.Log.Handler.Simple(streamHandler, fileHandler,
                                       GenericHandler (..),
@@ -28,6 +29,7 @@ import System.Log.Handler
 import System.Log.Formatter
 import System.IO
 import Control.Concurrent.MVar
+import Data.Typeable
 
 {- | A helper data type. -}
 
@@ -36,6 +38,7 @@ data GenericHandler a = GenericHandler {priority :: Priority,
                                         privData :: a,
                                         writeFunc :: a -> String -> IO (),
                                         closeFunc :: a -> IO () }
+  deriving (Typeable)
 
 instance LogHandler (GenericHandler a) where
     setLevel sh p = sh{priority = p}

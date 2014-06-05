@@ -36,7 +36,7 @@ import System.Log
 -- | A LogFormatter is used to format log messages.  Note that it is paramterized on the
 -- 'Handler' to allow the formatter to use information specific to the handler
 -- (an example of can be seen in the formatter used in 'System.Log.Handler.Syslog')
-type LogFormatter a = a -- ^ The LogHandler that the passed message came from 
+type LogFormatter a = a -- ^ The LogHandler that the passed message came from
                     -> LogRecord -- ^ The log message and priority
                     -> String -- ^ The logger name
                     -> IO String -- ^ The formatted log message
@@ -47,7 +47,7 @@ nullFormatter _ (_,msg) _ = return msg
 
 -- | Takes a format string, and returns a formatter that may be used to
 --   format log messages.  The format string may contain variables prefixed with
---   a $-sign which will be replaced at runtime with corresponding values.  The 
+--   a $-sign which will be replaced at runtime with corresponding values.  The
 --   currently supported variables are:
 --
 --    * @$msg@ - The actual log message
@@ -60,11 +60,11 @@ nullFormatter _ (_,msg) _ = return msg
 --
 --    * @$pid@  - Process ID  (Not available on windows)
 --
---    * @$time@ - The current time 
+--    * @$time@ - The current time
 --
 --    * @$utcTime@ - The current time in UTC Time
 simpleLogFormatter :: String -> LogFormatter a
-simpleLogFormatter format h (prio, msg) loggername = 
+simpleLogFormatter format h (prio, msg) loggername =
     tfLogFormatter "%F %X %Z" format h (prio,msg) loggername
 
 -- | Like 'simpleLogFormatter' but allow the time format to be specified in the first
@@ -90,7 +90,7 @@ varFormatter vars format h (prio,msg) loggername = do
                                  ,("pid", show <$> getProcessID)
 #endif
                                  ]
-                          ) 
+                          )
                   format
     return outmsg
 
@@ -109,5 +109,5 @@ replaceVarM keyVals (s:ss) | s=='$' = do (f,rest) <- replaceStart keyVals ss
       replaceStart ((k,v):kvs) str | k `isPrefixOf` str = do vs <- v
                                                              return (vs, drop (length k) str)
                                    | otherwise = replaceStart kvs str
-                
+
 

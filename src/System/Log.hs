@@ -3,7 +3,7 @@
    Copyright  : Copyright (C) 2004-2011 John Goerzen
    License    : BSD3
 
-   Maintainer : John Goerzen <jgoerzen@complete.org> 
+   Maintainer : John Goerzen <jgoerzen@complete.org>
    Stability  : experimental
    Portability: portable
 
@@ -35,7 +35,7 @@ definitions are given below, but you are free to interpret them however you
 like.  They are listed here in ascending importance order.
 -}
 
-data Priority = 
+data Priority =
             DEBUG                   -- ^ Debug messages
           | INFO                    -- ^ Information
           | NOTICE                  -- ^ Normal runtime conditions
@@ -44,7 +44,17 @@ data Priority =
           | CRITICAL                -- ^ Severe situations
           | ALERT                   -- ^ Take immediate action
           | EMERGENCY               -- ^ System is unusable
-                    deriving (Eq, Ord, Show, Read)
+                    deriving (Eq, Ord, Enum, Bounded, Read)
+
+instance Show Priority where
+  show DEBUG    = "DEBUG    "
+  show INFO     = "INFO     "
+  show NOTICE   = "NOTICE   "
+  show WARNING  = "WARNING  "
+  show ERROR    = "ERROR    "
+  show CRITICAL = "CRITICAL "
+  show ALERT    = "ALERT    "
+  show EMERGENCY= "EMERGENCY"
 
 {- | Internal type of log records -}
 

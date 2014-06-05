@@ -3,7 +3,7 @@
    Copyright  : Copyright (C) 2004-2011 John Goerzen
    License    : BSD3
 
-   Maintainer : John Goerzen <jgoerzen@complete.org> 
+   Maintainer : John Goerzen <jgoerzen@complete.org>
    Stability  : provisional
    Portability: portable
 
@@ -22,7 +22,7 @@ name, and they are arranged hierarchically.  Periods serve as separators.
 Therefore, a 'Logger' named \"foo\" is the parent of loggers \"foo.printing\",
 \"foo.html\", and \"foo.io\".  These names can be anything you want.  They're
 used to indicate the area of an application or library in which a logged
-message originates.  Later you will see how you can use this concept to 
+message originates.  Later you will see how you can use this concept to
 fine-tune logging behaviors based on specific application areas.
 
 You can also tune logging behaviors based upon how important a message is.
@@ -31,7 +31,7 @@ importance levels are given by the 'Priority' type.  I've also provided
 some convenient functions that correspond to these importance levels:
 'debugM' through 'emergencyM' log messages with the specified importance.
 
-Now, an importance level (or 'Priority') 
+Now, an importance level (or 'Priority')
 is associated not just with a particular message but also
 with a 'Logger'.  If the 'Priority' of a given log message is lower than
 the 'Priority' configured in the 'Logger', that message is ignored.  This
@@ -78,7 +78,7 @@ there will be called for every message.  You can use 'getRootLogger' to get
 it or 'rootLoggerName' to work with it by name.
 
 The formatting of log messages may be customized by setting a 'LogFormatter'
-on the desired 'LogHandler'.  There are a number of simple formatters defined 
+on the desired 'LogHandler'.  There are a number of simple formatters defined
 in "System.Log.Formatter", which may be used directly, or extend to create
 your own formatter.
 
@@ -89,27 +89,27 @@ Here's an example to illustrate some of these concepts:
 > import System.Log.Handler.Simple
 > import System.Log.Handler (setFormatter)
 > import System.Log.Formatter
-> 
+>
 > -- By default, all messages of level WARNING and above are sent to stderr.
 > -- Everything else is ignored.
-> 
+>
 > -- "MyApp.Component" is an arbitrary string; you can tune
 > -- logging behavior based on it later.
 > main = do
 >        debugM "MyApp.Component"  "This is a debug message -- never to be seen"
 >        warningM "MyApp.Component2" "Something Bad is about to happen."
-> 
+>
 >        -- Copy everything to syslog from here on out.
 >        s <- openlog "SyslogStuff" [PID] USER DEBUG
 >        updateGlobalLogger rootLoggerName (addHandler s)
->       
+>
 >        errorM "MyApp.Component" "This is going to stderr and syslog."
 >
 >        -- Now we'd like to see everything from BuggyComponent
 >        -- at DEBUG or higher go to syslog and stderr.
 >        -- Also, we'd like to still ignore things less than
 >        -- WARNING in other areas.
->        -- 
+>        --
 >        -- So, we adjust the Logger for MyApp.BuggyComponent.
 >
 >        updateGlobalLogger "MyApp.BuggyComponent"
@@ -117,10 +117,10 @@ Here's an example to illustrate some of these concepts:
 >
 >        -- This message will go to syslog and stderr
 >        debugM "MyApp.BuggyComponent" "This buggy component is buggy"
-> 
+>
 >        -- This message will go to syslog and stderr too.
 >        warningM "MyApp.BuggyComponent" "Still Buggy"
-> 
+>
 >        -- This message goes nowhere.
 >        debugM "MyApp.WorkingComponent" "Hello"
 >
@@ -131,14 +131,16 @@ Here's an example to illustrate some of these concepts:
 >        h <- fileHandler "debug.log" DEBUG >>= \lh -> return $
 >                 setFormatter lh (simpleLogFormatter "[$time : $loggername : $prio] $msg")
 >        updateGlobalLogger "MyApp.BuggyComponent" (addHandler h)
->       
->        -- This message will go to syslog and stderr, 
+>
+>        -- This message will go to syslog and stderr,
 >        -- and to the file "debug.log" with a format like :
 >        -- [2010-05-23 16:47:28 : MyApp.BuggyComponent : DEBUG] Some useful diagnostics...
 >        debugM "MyApp.BuggyComponent" "Some useful diagnostics..."
 >
 >
 -}
+
+{-# LANGUAGE BangPatterns #-}
 
 module System.Log.Logger(
                                -- * Basic Types
@@ -178,7 +180,7 @@ global 'Logger' hierarchy.  You may use your new 'Logger's locally,
 but other functions won't see the changes.  To make a change global,
 you'll need to use 'updateGlobalLogger' or 'saveGlobalLogger'.
 -}
-                               addHandler, setHandlers,
+                               addHandler, removeHandler, setHandlers,
                                getLevel, setLevel, clearLevel,
                                -- ** Saving Your Changes
 {- | These functions commit changes you've made to loggers to the global
@@ -227,29 +229,29 @@ rootLoggerName = ""
 -- Logger Tree Storage
 ---------------------------------------------------------------------------
 
--- | The log tree.  Initialize it with a default root logger 
+-- | The log tree.  Initialize it with a default root logger
 -- and (FIXME) a logger for MissingH itself.
 
 {-# NOINLINE logTree #-}
 
 logTree :: MVar LogTree
 -- note: only kick up tree if handled locally
-logTree = 
+logTree =
     unsafePerformIO $ do
                       h <- streamHandler stderr DEBUG
-                      newMVar (Map.singleton rootLoggerName (Logger 
+                      newMVar (Map.singleton rootLoggerName (Logger
                                                    {level = Just WARNING,
                                                     name = "",
                                                     handlers = [HandlerT h]}))
 
 {- | Given a name, return all components of it, starting from the root.
-Example return value: 
+Example return value:
 
 >["", "MissingH", "System.Cmd.Utils", "System.Cmd.Utils.pOpen"]
 
 -}
 componentsOfName :: String -> [String]
-componentsOfName name =
+componentsOfName !name =
     let joinComp [] _ = []
         joinComp (x:xs) [] = x : joinComp xs x
         joinComp (x:xs) accum =
@@ -269,7 +271,7 @@ logM :: String                           -- ^ Name of the logger to use
      -> String                           -- ^ The log text itself
      -> IO ()
 
-logM logname pri msg = do
+logM !logname !pri !msg = do
                        l <- getLogger logname
                        logL l pri msg
 
@@ -281,49 +283,49 @@ logM logname pri msg = do
 debugM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-debugM s = logM s DEBUG
+debugM !s = logM s DEBUG
 
 {- | Log a message at 'INFO' priority -}
 infoM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-infoM s = logM s INFO
+infoM !s = logM s INFO
 
 {- | Log a message at 'NOTICE' priority -}
 noticeM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-noticeM s = logM s NOTICE
+noticeM !s = logM s NOTICE
 
 {- | Log a message at 'WARNING' priority -}
 warningM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-warningM s = logM s WARNING
+warningM !s = logM s WARNING
 
 {- | Log a message at 'ERROR' priority -}
 errorM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-errorM s = logM s ERROR
+errorM !s = logM s ERROR
 
 {- | Log a message at 'CRITICAL' priority -}
 criticalM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-criticalM s = logM s CRITICAL
+criticalM !s = logM s CRITICAL
 
 {- | Log a message at 'ALERT' priority -}
 alertM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-alertM s = logM s ALERT
+alertM !s = logM s ALERT
 
 {- | Log a message at 'EMERGENCY' priority -}
 emergencyM :: String                         -- ^ Logger name
       -> String                         -- ^ Log message
       -> IO ()
-emergencyM s = logM s EMERGENCY
+emergencyM !s = logM s EMERGENCY
 
 ---------------------------------------------------------------------------
 -- Public Logger Interaction Support
@@ -347,7 +349,7 @@ getLogger lname = modifyMVar logTree $ \lt ->
           createLoggers (x:xs) lt = -- Add logger to tree
               if Map.member x lt
                  then createLoggers xs lt
-                 else createLoggers xs 
+                 else createLoggers xs
                           (Map.insert x (defaultLogger {name=x}) lt)
           defaultLogger = Logger Nothing [] undefined
 
@@ -358,16 +360,16 @@ getRootLogger = getLogger rootLoggerName
 
 -- | Log a message, assuming the current logger's level permits it.
 logL :: Logger -> Priority -> String -> IO ()
-logL l pri msg = handle l (pri, msg)
+logL !l !pri !msg = handle l (pri, msg)
 
 -- | Handle a log request.
 handle :: Logger -> LogRecord -> IO ()
-handle l (pri, msg) = 
+handle !l (!pri, !msg) =
     let parentLoggers :: String -> IO [Logger]
         parentLoggers [] = return []
-        parentLoggers name = 
+        parentLoggers name =
             let pname = (head . drop 1 . reverse . componentsOfName) name
-                in 
+                in
                 do parent <- getLogger pname
                    next <- parentLoggers pname
                    return (parent : next)
@@ -386,7 +388,7 @@ handle l (pri, msg) =
         in
         do lp <- getLoggerPriority (name l)
            if pri >= lp
-              then do 
+              then do
                 ph <- parentHandlers (name l)
                 sequence_ (handlerActions (ph ++ (handlers l)) (pri, msg)
                                           (name l))
@@ -401,15 +403,35 @@ callHandler lr loggername ht =
 -- | Generate IO actions for the handlers.
 handlerActions :: [HandlerT] -> LogRecord -> String -> [IO ()]
 handlerActions h lr loggername = map (callHandler lr loggername ) h
-                         
+
 -- | Add handler to 'Logger'.  Returns a new 'Logger'.
 addHandler :: LogHandler a => a -> Logger -> Logger
 addHandler h l= l{handlers = (HandlerT h) : (handlers l)}
 
+-- | Remove a handler from the 'Logger'.  Handlers are removed in the reverse
+-- order they were added, so the following property holds for any 'LogHandler'
+-- @h@:
+--
+-- > removeHandler . addHandler h = id
+--
+-- If no handlers are associated with the 'Logger', it is returned unchanged.
+--
+-- The root logger's default handler that writes every message to stderr can
+-- be removed by using this function before any handlers have been added
+-- to the root logger:
+--
+-- > updateGlobalLogger rootLoggerName removeHandler
+removeHandler :: Logger -> Logger
+removeHandler l =
+    case hs of [] -> l
+               _  -> l{handlers = tail hs}
+  where
+    hs = handlers l
+
 -- | Set the 'Logger'\'s list of handlers to the list supplied.
 -- All existing handlers are removed first.
 setHandlers :: LogHandler a => [a] -> Logger -> Logger
-setHandlers hl l = 
+setHandlers hl l =
     l{handlers = map (\h -> HandlerT h) hl}
 
 -- | Returns the "level" of the logger.  Items beneath this
@@ -434,7 +456,7 @@ clearLevel l = l {level = Nothing}
 -- account any changes you may have made.
 
 saveGlobalLogger :: Logger -> IO ()
-saveGlobalLogger l = modifyMVar_ logTree 
+saveGlobalLogger l = modifyMVar_ logTree
                      (\lt -> return $ Map.insert (name l) l lt)
 
 {- | Helps you make changes on the given logger.  Takes a function
@@ -481,7 +503,7 @@ traplogging logger priority desc action =
                     Control.Exception.throw e             -- Re-raise it
         in
         Control.Exception.catch action handler
-    
+
 {- This function pulled in from MissingH to avoid a dep on it -}
 split :: Eq a => [a] -> [a] -> [[a]]
 split _ [] = []

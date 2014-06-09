@@ -179,6 +179,7 @@ but other functions won't see the changes.  To make a change global,
 you'll need to use 'updateGlobalLogger' or 'saveGlobalLogger'.
 -}
                                addHandler, removeHandler, setHandlers,
+                               addJustOneHandler,
                                getLevel, setLevel, clearLevel,
                                -- ** Saving Your Changes
 {- | These functions commit changes you've made to loggers to the global
@@ -405,6 +406,13 @@ handlerActions h lr loggername = map (callHandler lr loggername ) h
 -- | Add handler to 'Logger'.  Returns a new 'Logger'.
 addHandler :: LogHandler a => a -> Logger -> Logger
 addHandler h l= l{handlers = (HandlerT h) : (handlers l)}
+
+-- | Add handler to 'Logger' if none exists, and returns a new 'Logger'.
+-- Otherwise, returns the original 'Logger' unaltered.
+addJustOneHandler :: LogHandler a => a -> Logger -> Logger
+addJustOneHandler h l = case handlers l of
+  [] -> addHandler h l
+  _  -> l
 
 -- | Remove a handler from the 'Logger'.  Handlers are removed in the reverse
 -- order they were added, so the following property holds for any 'LogHandler'
